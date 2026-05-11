@@ -26,6 +26,6 @@ COPY start.sh /app/start.sh
 
 RUN chmod +x /app/start.sh
 
-EXPOSE 10000
+EXPOSE 900
 
 CMD ["/app/start.sh"]
