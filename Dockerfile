@@ -13,25 +13,21 @@ COPY server/pom.xml /build/server/pom.xml
 COPY server/src /build/server/src
 
 WORKDIR /build/server
-RUN mvn clean package -DskipTests -q
+
+RUN mvn clean package -DskipTests
 
 FROM eclipse-temurin:8-jre
 
 WORKDIR /app
 
 COPY --from=builder \
-     /build/server/target/corba-pdf-server-1.8-jar-with-dependencies.jar \
-     /app/corba-pdf-server.jar
+/build/server/target/corba-pdf-server-1.8-jar-with-dependencies.jar \
+/app/corba-pdf-server.jar
 
-RUN mkdir -p /tmp/corba_pdf_output
+COPY start.sh /app/start.sh
 
-EXPOSE 1050
+RUN chmod +x /app/start.sh
 
-CMD java \
-    -Dorg.omg.CORBA.ORBInitialHost=orbd \
-    -Dorg.omg.CORBA.ORBInitialPort=900 \
-    -classpath /app/corba-pdf-server.jar \
-    com.corba.pdf.PDFServer \
-    -ORBInitialHost orbd \
-    -ORBInitialPort 900
-# cache-bust: Tue May  5 21:45:09 UTC 2026
+EXPOSE 900
+
+CMD ["/app/start.sh"]
