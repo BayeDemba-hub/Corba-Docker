@@ -1,0 +1,33 @@
+FROM maven:3.8.6-openjdk-8 AS builder
+
+WORKDIR /build
+
+# Compiler l'IDL pour générer les stubs CORBA
+COPY idl/PDFService.idl /build/idl/PDFService.idl
+RUN mkdir -p /build/bridge/src/main/java && \
+    idlj -fall \
+         -td /build/bridge/src/main/java \
+         /build/idl/PDFService.idl
+
+# Compiler le bridge
+COPY bridge/pom.xml /build/bridge/pom.xml
+COPY bridge/src /build/bridge/src
+WORKDIR /build/bridge
+RUN mvn clean package -DskipTests -q
+
+# Runtime : Tomcat 8.5 + JDK 8
+FROM tomcat:8.5-jdk8-openjdk-slim
+
+# Supprimer les apps par défaut
+RUN rm -rf /usr/local/tomcat/webapps/*
+
+# Déployer le WAR du bridge
+COPY --from=builder /build/bridge/target/bridge.war \
+     /usr/local/tomcat/webapps/ROOT.war
+
+# Répertoire partagé pour les images générées
+RUN mkdir -p /tmp/corba_pdf_output
+
+EXPOSE 8080
+
+CMD ["catalina.sh", "run"]
