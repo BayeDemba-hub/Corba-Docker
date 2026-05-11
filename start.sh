@@ -1,7 +1,5 @@
 #!/bin/sh
 
-python -m http.server 10000 &
-
 orbd -ORBInitialPort 900 &
 
 sleep 5
